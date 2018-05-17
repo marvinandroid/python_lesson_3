@@ -19,3 +19,14 @@
 # CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+from django.db import models
+
+# Create your models here.
+
+class LogRecord(models.Model):
+    username = models.CharField(max_length=64)
+    auth_system = models.CharField(max_length=64, null=True)
+    user_ip = models.CharField(max_length=64, null=True)
+    destination_ip = models.CharField(max_length=64, null=True)
+    destination_port = models.IntegerField(default=0)
+    connected_at = models.DateTimeField(max_length=64)

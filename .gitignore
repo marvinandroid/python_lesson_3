@@ -554,3 +554,4 @@ xcuserdata
 *.moved-aside
 *.xcuserstate
 
+*.sqlite3

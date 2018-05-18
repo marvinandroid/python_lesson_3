@@ -553,5 +553,3 @@ xcuserdata
 *.xccheckout
 *.moved-aside
 *.xcuserstate
-
-*.sqlite3

@@ -1,0 +1,79 @@
+{% extends 'main.html' %}
+{% block content %}
+<page></page>
+{% endblock %}
+{% block template %}
+    <script id="page" type="text/x-template">
+        <v-layout justify-center>
+            <v-flex md9>
+                <highcharts :options="chart_config"></highcharts>
+            </v-flex>
+        </v-layout>
+    </script>
+{% endblock %}
+{% block script %}
+    <script>
+    Vue.component("page", {
+        template: "#page",
+        data: function () {
+            return {daily_data: [], daily_users: []}
+        },
+        mounted: function () {
+            var vm = this,
+                requests = [
+                    axios.get("/daily_data"),
+                    axios.get("/daily_users")
+                ];
+            axios.all(requests).
+                then(axios.spread(function (ddata, dusers) {
+                    vm.daily_data = ddata.data;
+                    vm.daily_users = dusers.data;
+                })).
+                catch(function () {
+                    vm.$root.notify("Не удалось загрузить данные!")
+                })
+        },
+        computed: {
+            chart_config: function () {
+                return {
+                    chart: {type: "column"},
+                    title: {text: "Ежедневное количество подключений"},
+                    xAxis: {
+                        categories: _.map(this.daily_data, function (item) { return item.date }),
+                        crosshair: true
+                    },
+                    yAxis: [
+                        {
+                            min: 0,
+                            title: {text: "Количество, шт."},
+                            labels: {format: "{value} шт."}
+                        },
+                        {
+                            min: 0,
+                            title: {text: "Количество пользователей"},
+                            opposite: true
+                        }
+                    ],
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        }
+                    },
+                    series: [
+                        {
+                            name: "Подключения",
+                            data: _.map(this.daily_data, function (item) { return item.count })
+                        },
+                        {
+                            name: "Пользователи",
+                            data: _.map(this.daily_users, function (item) { return item.count}),
+                            yAxis: 1
+                        }
+                    ]
+                }
+            }
+        }
+    })
+    </script>
+{% endblock %}

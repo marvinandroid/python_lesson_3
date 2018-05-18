@@ -34,18 +34,15 @@
         </v-toolbar>
         <v-content>
             <v-container fluid fill-height>
-                <v-layout justify-center>
-                    <v-flex md9>
-                        <highcharts :options="daily_chart"></highcharts>
-                    </v-flex>
-                </v-layout>
+                {% block content %}
+                {% endblock %}
             </v-container>
         </v-content>
         <v-footer app fixed>
             <span>&copy; 2018 Захаров А.Д.</span>
         </v-footer>
         <v-snackbar timeout.int="6000" bottom right v-model="snackbar">
-            {{ snackbar_text }}
+            [[ snackbarText ]]
             <v-btn flat color="pink" @click.native="snackbar = false">Закрыть</v-btn>
         </v-snackbar>
     </v-app>
@@ -59,47 +56,24 @@
 <script src="/static/highcharts.js"></script>
 <script src="/static/highcharts-more.js"></script>
 <script src="/static/vue-highcharts.js"></script>
+{% block template %}
+{% endblock %}
+{% block script %}
+{%  endblock %}
 <script>
     Vue.use(VueHighcharts);
     window.application = new Vue({
         el: "#app",
+        delimiters: ["[[", "]]"],
         data: {
             drawer: true,
             snackbar: false,
-            snackbar_text: "",
-            daily_data: [],
+            snackbarText: ""
         },
-        mounted: function () {
-            var vm = this;
-            axios.get("/daily_data").
-                then(function (xhr) { vm.daily_data = xhr.data }).
-                catch(function (xhr) {
-                    vm.snackbar_text = "Не удалось получить данные: " + xhr.response.statusText;
-                    vm.snackbar = true
-            })
-        },
-        computed: {
-            daily_chart: function () {
-                return {
-                    chart: {type: "column"},
-                    title: {text: "Ежедневное количество подключений"},
-                    xAxis: {
-                        categories: _.map(this.daily_data, function (item) { return item.date }),
-                        crosshair: true},
-                    yAxis: {min:0, title: {text: "Количество, шт."}},
-                    plotOptions: {
-                        column: {
-                            pointPadding: 0.2,
-                            borderWidth: 0
-                        }
-                    },
-                    series: [
-                        {
-                            name: "Подключения",
-                            data: _.map(this.daily_data, function (item) { return item.count })
-                        }
-                    ]
-                }
+        methods: {
+            notify: function (text) {
+                this.snackbarText = text;
+                this.snackbar = true;
             }
         }
     });

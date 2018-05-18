@@ -4,48 +4,103 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="adzakha2@mts.ru">
-    <title>Просмотрщик логов Dante</title>
-    <link href="/static/bootstrap.css" rel="stylesheet">
-    <link href="/static/bootstrap-theme.css" rel="stylesheet">
+    <title>Статистика Dante</title>
+    <link href="/static/vuetify.css" rel="stylesheet">
+    <link href="/static/material-icons.css" rel="stylesheet">
+    <link href="/static/highcharts.css" rel="stylesheet">
 </head>
 <body>
 <div id="app">
-    <!-- <v-navbar placement="top" type="inverse">
-        <a slot="brand" href="/" title="Главная" class="navbar-brand">DanteView</a>
-        <li class="dropdown">
-            <a href="#" class="dropdown-toggle">Меню</a>
-            <ul class="dropdown-menu">
-                <li><a href="#">Главная</a></li>
-            </ul>
-        </li>
-    </v-navbar>
-    <v-dropdown text="Test" type="primary">
-        <li><a href="#">Hello</a></li>
-    </v-dropdown> -->
+    <v-app dark>
+        <v-navigation-drawer
+                v-model="drawer"
+                clipped
+                fixed
+                app>
+            <v-list dense>
+                <v-list-tile @click="">
+                    <v-list-tile-action>
+                        <v-icon>home</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-content>
+                        <v-list-tile-title>Главная</v-list-tile-title>
+                    </v-list-tile-content>
+                </v-list-tile>
+            </v-list>
+        </v-navigation-drawer>
+        <v-toolbar app fixed clipped-left>
+            <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
+            <v-toolbar-title>Статистика Dante</v-toolbar-title>
+        </v-toolbar>
+        <v-content>
+            <v-container fluid fill-height>
+                <v-layout justify-center>
+                    <v-flex md9>
+                        <highcharts :options="daily_chart"></highcharts>
+                    </v-flex>
+                </v-layout>
+            </v-container>
+        </v-content>
+        <v-footer app fixed>
+            <span>&copy; 2018 Захаров А.Д.</span>
+        </v-footer>
+        <v-snackbar timeout.int="6000" bottom right v-model="snackbar">
+            {{ snackbar_text }}
+            <v-btn flat color="pink" @click.native="snackbar = false">Закрыть</v-btn>
+        </v-snackbar>
+    </v-app>
 </div>
 </body>
-<script src="/static/axios.js" type="application/javascript"></script>
-<script src="/static/lodash.js" type="application/javascript"></script>
-<script src="/static/moment-with-locales.js" type="application/javascript"></script>
-<script src="/static/vue.js" type="application/javascript"></script>
-<script src="/static/vue-strap.js" type="application/javascript"></script>
-<script src="/static/vue-strap-lang.js" type="application/javascript"></script>
+<script src="/static/axios.js"></script>
+<script src="/static/lodash.js"></script>
+<script src="/static/moment-with-locales.js"></script>
+<script src="/static/vue.js"></script>
+<script src="/static/vuetify.js"></script>
+<script src="/static/highcharts.js"></script>
+<script src="/static/highcharts-more.js"></script>
+<script src="/static/vue-highcharts.js"></script>
 <script>
-    /* _.forEach(VueStrap, function (component, name) {
-        switch (name) {
-            case "directives":
-            case "utils":
-            case "components":
-                return;
-            default:
-                Vue.component("v" + _.capitalize(name), component)
-        }
-    }); */
-
+    Vue.use(VueHighcharts);
     window.application = new Vue({
         el: "#app",
-        components: {
-            vDropdown: VueStrap.dropdown
+        data: {
+            drawer: true,
+            snackbar: false,
+            snackbar_text: "",
+            daily_data: [],
+        },
+        mounted: function () {
+            var vm = this;
+            axios.get("/daily_data").
+                then(function (xhr) { vm.daily_data = xhr.data }).
+                catch(function (xhr) {
+                    vm.snackbar_text = "Не удалось получить данные: " + xhr.response.statusText;
+                    vm.snackbar = true
+            })
+        },
+        computed: {
+            daily_chart: function () {
+                return {
+                    chart: {type: "column"},
+                    title: {text: "Ежедневное количество подключений"},
+                    xAxis: {
+                        categories: _.map(this.daily_data, function (item) { return item.date }),
+                        crosshair: true},
+                    yAxis: {min:0, title: {text: "Количество, шт."}},
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        }
+                    },
+                    series: [
+                        {
+                            name: "Подключения",
+                            data: _.map(this.daily_data, function (item) { return item.count })
+                        }
+                    ]
+                }
+            }
         }
     });
 </script>
